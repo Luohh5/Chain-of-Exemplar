@@ -32,7 +32,7 @@ Educational Question Generation</h1>
 
 ## Quickstart
 
-Below, we provide simple examples to show how to use Qwen-VL and Qwen-VL-Chat with 🤖 ModelScope and 🤗 Transformers.
+Below, we provide simple examples to show how to use Chain-of-Exemplar with 🤖 ModelScope and 🤗 Transformers.
 
 Before running the code, make sure you have setup the environment and installed the required packages. Make sure you meet the above requirements, and then install the dependent libraries.
 
@@ -40,128 +40,29 @@ Before running the code, make sure you have setup the environment and installed 
 pip install -r requirements.txt
 ```
 
-Now you can start with ModelScope or Transformers. More usage aboue vision encoder, please refer to the [tutorial](TUTORIAL.md).
+Now you can start with Transformers or ModelScope(updating...).
 
 #### 🤗 Transformers
 
-To use Qwen-VL-Chat for the inference, all you need to do is to input a few lines of codes as demonstrated below. However, **please make sure that you are using the latest code.**
+To use Chain-of-Exemplar for the inference, all you need to do is to input a few lines of codes as demonstrated below. However, **please make sure that you are using the latest code.**
 
 ```python
-from transformers import AutoModelForCausalLM, AutoTokenizer
-from transformers.generation import GenerationConfig
-import torch
-torch.manual_seed(1234)
+from peft import AutoPeftModelForCausalLM
+from transformers import AutoTokenizer
 
-# Note: The default behavior now has injection attack prevention off.
-tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen-VL-Chat", trust_remote_code=True)
-
-# use bf16
-# model = AutoModelForCausalLM.from_pretrained("Qwen/Qwen-VL-Chat", device_map="auto", trust_remote_code=True, bf16=True).eval()
-# use fp16
-# model = AutoModelForCausalLM.from_pretrained("Qwen/Qwen-VL-Chat", device_map="auto", trust_remote_code=True, fp16=True).eval()
-# use cpu only
-# model = AutoModelForCausalLM.from_pretrained("Qwen/Qwen-VL-Chat", device_map="cpu", trust_remote_code=True).eval()
-# use cuda device
-model = AutoModelForCausalLM.from_pretrained("Qwen/Qwen-VL-Chat", device_map="cuda", trust_remote_code=True).eval()
-
-# Specify hyperparameters for generation
-model.generation_config = GenerationConfig.from_pretrained("Qwen/Qwen-VL-Chat", trust_remote_code=True)
-
-# 1st dialogue turn
-query = tokenizer.from_list_format([
-    {'image': 'https://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen-VL/assets/demo.jpeg'}, # Either a local path or an url
-    {'text': '这是什么?'},
-])
-response, history = model.chat(tokenizer, query=query, history=None)
-print(response)
-# 图中是一名女子在沙滩上和狗玩耍，旁边是一只拉布拉多犬，它们处于沙滩上。
-
-# 2nd dialogue turn
-response, history = model.chat(tokenizer, '框出图中击掌的位置', history=history)
-print(response)
-# <ref>击掌</ref><box>(536,509),(588,602)</box>
-image = tokenizer.draw_bbox_on_latest_picture(response, history)
-if image:
-  image.save('1.jpg')
-else:
-  print("no box")
-```
-
-<p align="center">
-    <img src="assets/demo_highfive.jpg" width="500"/>
-<p>
-
-<details>
-  <summary>Running Qwen-VL</summary>
-
-Running Qwen-VL pretrained base model is also simple.
-
-```python
-from transformers import AutoModelForCausalLM, AutoTokenizer
-from transformers.generation import GenerationConfig
-import torch
-torch.manual_seed(1234)
-
-tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen-VL", trust_remote_code=True)
-
-# use bf16
-# model = AutoModelForCausalLM.from_pretrained("Qwen/Qwen-VL", device_map="auto", trust_remote_code=True, bf16=True).eval()
-# use fp16
-# model = AutoModelForCausalLM.from_pretrained("Qwen/Qwen-VL", device_map="auto", trust_remote_code=True, fp16=True).eval()
-# use cpu only
-# model = AutoModelForCausalLM.from_pretrained("Qwen/Qwen-VL", device_map="cpu", trust_remote_code=True).eval()
-# use cuda device
-model = AutoModelForCausalLM.from_pretrained("Qwen/Qwen-VL", device_map="cuda", trust_remote_code=True).eval()
-
-# Specify hyperparameters for generation (No need to do this if you are using transformers>4.32.0)
-# model.generation_config = GenerationConfig.from_pretrained("Qwen/Qwen-VL", trust_remote_code=True)
-
-query = tokenizer.from_list_format([
-    {'image': 'https://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen-VL/assets/demo.jpeg'}, # Either a local path or an url
-    {'text': 'Generate the caption in English with grounding:'},
-])
-inputs = tokenizer(query, return_tensors='pt')
-inputs = inputs.to(model.device)
-pred = model.generate(**inputs)
-response = tokenizer.decode(pred.cpu()[0], skip_special_tokens=False)
-print(response)
-# <img>https://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen-VL/assets/demo.jpeg</img>Generate the caption in English with grounding:<ref> Woman</ref><box>(451,379),(731,806)</box> and<ref> her dog</ref><box>(219,424),(576,896)</box> playing on the beach<|endoftext|>
-image = tokenizer.draw_bbox_on_latest_picture(response)
-if image:
-  image.save('2.jpg')
-else:
-  print("no box")
-```
-
-<p align="center">
-    <img src="assets/demo_spotting_caption.jpg" width="500"/>
-<p>
-
-</details>
-
-
-In the event of a network issue while attempting to download model checkpoints and codes from HuggingFace, an alternative approach is to initially fetch the checkpoint from ModelScope and then load it from the local directory as outlined below:
-
-```python
-from modelscope import snapshot_download
-from transformers import AutoModelForCausalLM, AutoTokenizer
-
-# Downloading model checkpoint to a local dir model_dir
-# model_dir = snapshot_download('qwen/Qwen-VL')
-model_dir = snapshot_download('qwen/Qwen-VL-Chat')
-
-
-# Loading local checkpoints
-# trust_remote_code is still set as True since we still load codes from local dir instead of transformers
-tokenizer = AutoTokenizer.from_pretrained(model_dir, trust_remote_code=True)
-model = AutoModelForCausalLM.from_pretrained(
-    model_dir,
+tokenizer = AutoTokenizer.from_pretrained('Lhh123/coe_multitask_blip2xl_angle_2ep', trust_remote_code=True)
+model = AutoPeftModelForCausalLM.from_pretrained(
+    'Lhh123/coe_multitask_blip2xl_angle_2ep', # path to the output directory
     device_map="cuda",
     trust_remote_code=True
 ).eval()
+
+query = "Picture: <img>YOUR_IMAGE_PATH</img>\nGenerate a question based on the picture."
+response, history = model.chat(tokenizer, query=query, history=None)
+print(response)
 ```
 
-#### 🤖 ModelScope
+#### 🤖 ModelScope(updating...)
 
 ModelScope is an opensource platform for Model-as-a-Service (MaaS), which provides flexible and cost-effective model service to AI developers. Similarly, you can run the models with ModelScope as shown below:
 
@@ -169,112 +70,12 @@ ModelScope is an opensource platform for Model-as-a-Service (MaaS), which provid
 from modelscope import (
     snapshot_download, AutoModelForCausalLM, AutoTokenizer, GenerationConfig
 )
-import torch
-model_id = 'qwen/Qwen-VL-Chat'
-revision = 'v1.0.0'
+model_id = 'Lhh123/coe_multitask_blip2xl_angle_2ep'
 
 model_dir = snapshot_download(model_id, revision=revision)
-torch.manual_seed(1234)
 
-tokenizer = AutoTokenizer.from_pretrained(model_dir, trust_remote_code=True)
-if not hasattr(tokenizer, 'model_dir'):
-    tokenizer.model_dir = model_dir
-# use bf16
-# model = AutoModelForCausalLM.from_pretrained(model_dir, device_map="auto", trust_remote_code=True, bf16=True).eval()
-# use fp16
-model = AutoModelForCausalLM.from_pretrained(model_dir, device_map="auto", trust_remote_code=True, fp16=True).eval()
-# use cpu
-# model = AutoModelForCausalLM.from_pretrained(model_dir, device_map="cpu", trust_remote_code=True).eval()
-# use auto
-model = AutoModelForCausalLM.from_pretrained(model_dir, device_map="auto", trust_remote_code=True).eval()
 
-# Specify hyperparameters for generation (No need to do this if you are using transformers>=4.32.0)
-# model.generation_config = GenerationConfig.from_pretrained(model_dir, trust_remote_code=True)
-
-# 1st dialogue turn
-# Either a local path or an url between <img></img> tags.
-image_path = 'https://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen-VL/assets/demo.jpeg'
-response, history = model.chat(tokenizer, query=f'<img>{image_path}</img>这是什么', history=None)
-print(response)
-# 图中是一名年轻女子在沙滩上和她的狗玩耍，狗的品种是拉布拉多。她们坐在沙滩上，狗的前腿抬起来，与人互动。
-
-# 2nd dialogue turn
-response, history = model.chat(tokenizer, '输出击掌的检测框', history=history)
-print(response)
-# <ref>"击掌"</ref><box>(211,412),(577,891)</box>
-image = tokenizer.draw_bbox_on_latest_picture(response, history)
-if image:
-  image.save('output_chat.jpg')
-else:
-  print("no box")
 ```
-
-<p align="center">
-    <img src="assets/demo_highfive.jpg" width="500"/>
-<p>
-<br>
-
-## Quantization
-
-### Usage
-
-We provide a new solution based on [AutoGPTQ](https://github.com/PanQiWei/AutoGPTQ), and release an Int4 quantized model for Qwen-VL-Chat, Qwen-VL-Chat-Int4 [Click here](https://huggingface.co/Qwen/Qwen-VL-Chat-Int4), which achieves nearly lossless model effects but improved performance on both memory costs and inference speed.
-
-Here we demonstrate how to use our provided quantized models for inference. Before you start, make sure you meet the requirements (e.g., torch 2.0 and above, transformers 4.32.0 and above, etc.) and install the required packages:
-
-```bash
-pip install optimum
-git clone https://github.com/JustinLin610/AutoGPTQ.git & cd AutoGPTQ
-pip install -v .
-```
-
-If you meet problems installing `auto-gptq`, we advise you to check out the official [repo](https://github.com/PanQiWei/AutoGPTQ) to find a wheel.
-
-Then you can load the quantized model easily and run inference as same as usual:
-
-```python
-model = AutoModelForCausalLM.from_pretrained(
-    "Qwen/Qwen-VL-Chat-Int4",
-    device_map="auto",
-    trust_remote_code=True
-).eval()
-# Either a local path or an url between <img></img> tags.
-image_path = 'https://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen-VL/assets/demo.jpeg'
-response, history = model.chat(tokenizer, query=f'<img>{image_path}</img>这是什么', history=None)
-print(response)
-```
-
-### Performance
-
-We illustrate the model performance of both BF16 and Int4 models on the benchmark **[TouchStone](https://github.com/OFA-Sys/TouchStone)**, and we find that the quantized model does not suffer from significant performance degradation. Results are shown below:
-
-| Quantization | ZH         | EN            |
-| ------------ | :--------: | :-----------: | 
-| BF16         | 401.2      |    645.2      |
-| Int4         | 386.6      |    651.4      |
-
-### Inference Speed
-
-We measured the average inference speed (tokens/s) of generating 1792 (2048-258) and 7934 (8192-258) tokens with the context of an image (which takes 258 tokens) under BF16 precision and Int4 quantization, respectively.
-
-| Quantization | Speed (2048 tokens) | Speed (8192 tokens) |
-| ------------ | :-----------------: | :-----------------: |
-| BF16         |        28.87        |        24.32        |
-| Int4         |        37.79        |        34.34        |
-
-The profiling runs on a single A100-SXM4-80G GPU with PyTorch 2.0.1 and CUDA 11.4.
-
-### GPU Memory Usage
-
-We also profile the peak GPU memory usage for encoding 1792 (2048-258) tokens (including an image) as context (and generating single token) and generating 7934 (8192-258) tokens (with an image as context) under BF16 or Int4 quantization level, respectively. The results are shown below.
-
-| Quantization | Peak Usage for Encoding 2048 Tokens | Peak Usage for Generating 8192 Tokens |
-| ------------ | :---------------------------------: | :-----------------------------------: |
-| BF16         |               22.60GB               |                28.01GB                |
-| Int4         |               11.82GB               |                17.23GB                |
-
-The above speed and memory profiling are conducted using [this script](https://qianwen-res.oss-cn-beijing.aliyuncs.com/profile_mm.py).
-<br>
 
 ## Finetuning
 
