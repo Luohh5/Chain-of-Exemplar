@@ -20,9 +20,6 @@ Educational Question Generation</h1>
 ## News and Updates
 * ```2024.8.16``` **Chain-of-Exemplar** has been accepted to ACL'24!
 
-## Evaluation
-
-
 ## Requirements
 
 * python 3.8 and above
@@ -86,7 +83,23 @@ pip install deepspeed
 ```
 
 ### Data preparation
-To prepare your training data, you need to put all the samples into a list and save it to a json file. Each sample is a dictionary consisting of an id and a list for conversation. Below is a simple example list with 1 sample:
+To prepare your training data, you need to put all the samples into a list and save it to a json file. We provide our train&val datasets (with our own root) [here](https://huggingface.co/datasets/Lhh123/CoE_ScienceQA). You need to change the image path to your own path instead of directly using it. Alternatively, you can download the raw data from the original dataset [ScienceQA](https://scienceqa.github.io/) and convert them into the following format by running:
+```python
+# Question generation data pre-process
+python prepare_qg.py
+
+# Rationale generation data pre-process
+python prepare_rg.py
+
+# Distractor generation data pre-process
+python prepare_dg.py
+```
+Subsequently, in **Contextualized Exemplar Retrieval** module, you can retrieve the top-k similar samples to serve as exemplars by running:
+```python
+python retrieve.py
+```
+
+Each sample is a dictionary consisting of an id and a list for conversation. Below is a simple example list with 1 sample:
 ```json
 [
   {
@@ -94,11 +107,11 @@ To prepare your training data, you need to put all the samples into a list and s
     "conversations": [
       {
         "from": "user",
-        "value": "你好"
+        "value": "Answer: apostrophe\nPlease generate a question from the corresponding answer."
       },
       {
         "from": "assistant",
-        "value": "我是Qwen-VL,一个支持视觉输入的大模型。"
+        "value": "Which figure of speech is used in this text?\nSing, O goddess, the anger of Achilles son of Peleus"
       }
     ]
   },
@@ -107,42 +120,18 @@ To prepare your training data, you need to put all the samples into a list and s
     "conversations": [
       {
         "from": "user",
-        "value": "Picture 1: <img>https://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen-VL/assets/demo.jpeg</img>\n图中的狗是什么品种？"
+        "value": "Picture: <img>/data/luohh/mm-cot/data/scienceqa/test/11/image.png</img>\nAnswer: New Hampshire\nPlease generate a question from this picture and the corresponding answer."
       },
       {
         "from": "assistant",
-        "value": "图中是一只拉布拉多犬。"
+        "value": "What is the name of the colony shown?"
       },
-      {
-        "from": "user",
-        "value": "框出图中的格子衬衫"
-      },
-      {
-        "from": "assistant",
-        "value": "<ref>格子衬衫</ref><box>(588,499),(725,789)</box>"
-      }
     ]
   },
-  { 
-    "id": "identity_2",
-    "conversations": [
-      {
-        "from": "user",
-        "value": "Picture 1: <img>assets/mm_tutorial/Chongqing.jpeg</img>\nPicture 2: <img>assets/mm_tutorial/Beijing.jpeg</img>\n图中都是哪"
-      },
-      {
-        "from": "assistant",
-        "value": "第一张图片是重庆的城市天际线，第二张图片是北京的天际线。"
-      }
-    ]
-  }
-]
 ```
-For the VL tasks, there are special tokens that are used, including `<img> </img> <ref> </ref> <box> </box>`.
+For the VL tasks, there are special tokens that are used, including `<img> </img>`.
 
 The picture is represented as `Picture id: <img>img_path</img>\n{your prompt}`, where `id` indicates the position of the image in the conversation, starting from 1. The "img_path" can be a local file path or a web link. 
-
-The coordinate box is expressed as `<box>(x1,y1),(x2,y2)</box>`·, where `(x1, y1)` and `(x2, y2)` are normalized values in the range `[0, 1000)`. Its corresponding text description can be identified by `<ref>text_caption</ref>`. 
 
 
 After data preparation, you can use the provided shell scripts to run finetuning. Remember to specify the path to the data file, `$DATA`.
@@ -151,6 +140,8 @@ The finetuning scripts allow you to perform:
 - Full-parameter finetuning
 - LoRA
 - Q-LoRA
+
+In addition to our checkpoints we provided, you can also conduct finetuning on [Qwen-VL-Chat-Int4](https://huggingface.co/Qwen/Qwen-VL-Chat)(our base model).
 
 ### Full-parameter finetuning
 Full-parameter parameter finetuning requires updating all parameters of LLM in the whole training process. In our experiments, frozening the parameters of ViT during the fine-tuning phase achieves better performance. To launch your training, run the following script:
@@ -247,44 +238,21 @@ We profile the GPU memory and training speed of both LoRA (Base) refers to train
 
 <br>
 
-## Demo
+## Evaluation
 
-### Web UI
-
-We provide code for users to build a web UI demo. Before you start, make sure you install the following packages:
-
-```
-pip install -r requirements_web_demo.txt
-```
-
-Then run the command below and click on the generated link:
-
-```
-python web_demo_mm.py
-```
-
-<br>
-
-## FAQ
-
-If you meet problems, please refer to [FAQ](FAQ.md) and the issues first to search a solution before you launch a new issue.
-<br>
-
-## License Agreement
-
-Researchers and developers are free to use the codes and model weights of both Qwen-VL and Qwen-VL-Chat. We also allow their commercial use. Check our license at [LICENSE](LICENSE) for more details.
-<br>
+To evaluate the quality of generated questions and distractors.
 
 ## Citation
 
 If you find our paper and code useful in your research, please consider giving a star :star: and citation :pencil: :)
 
 ```BibTeX
-@article{Qwen-VL,
-  title={Qwen-VL: A Versatile Vision-Language Model for Understanding, Localization, Text Reading, and Beyond},
-  author={Bai, Jinze and Bai, Shuai and Yang, Shusheng and Wang, Shijie and Tan, Sinan and Wang, Peng and Lin, Junyang and Zhou, Chang and Zhou, Jingren},
-  journal={arXiv preprint arXiv:2308.12966},
-  year={2023}
+@inproceedings{luo2024chain,
+  title={Chain-of-Exemplar: Enhancing Distractor Generation for Multimodal Educational Question Generation},
+  author={Luo, Haohao and Deng, Yang and Shen, Ying and Ng, See Kiong and Chua, Tat-Seng},
+  booktitle={Proceedings of the 62nd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)},
+  pages={7978--7993},
+  year={2024}
 }
 ```
 
@@ -292,5 +260,5 @@ If you find our paper and code useful in your research, please consider giving a
 
 ## Contact Us
 
-If you are interested to leave a message to either our research team or product team, feel free to send an email to qianwen_opensource@alibabacloud.com.
+If you are interested to leave a message to either our research team or product team, feel free to send an email to luohh5@mail2.sysu.edu.cn.
 
