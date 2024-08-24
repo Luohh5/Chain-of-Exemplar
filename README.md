@@ -4,7 +4,7 @@
 Educational Question Generation</h1>
 <p align="center">
 <br>
-<a href="assets/wechat.jpg">WeChat</a>&nbsp&nbsp | &nbsp&nbsp<a href="https://none">Dataset(Updating...)</a>&nbsp&nbsp | &nbsp&nbsp<a href="https://none">Checkpoints(Updating...)</a>&nbsp ｜ &nbsp<a href="https://aclanthology.org/2024.acl-long.432.pdf">Paper</a>&nbsp&nbsp
+<a href="assets/wechat.jpg">WeChat</a>&nbsp&nbsp | &nbsp&nbsp<a href="https://huggingface.co/datasets/Lhh123/CoE_ScienceQA">Dataset</a>&nbsp&nbsp | &nbsp&nbsp<a href="https://huggingface.co/Lhh123/coe_multitask_blip2xl_angle_2ep">Checkpoints</a>&nbsp ｜ &nbsp<a href="https://aclanthology.org/2024.acl-long.432.pdf">Paper</a>&nbsp&nbsp
 </p>
 <br><br>
 
@@ -83,7 +83,7 @@ pip install deepspeed
 ```
 
 ### Data preparation
-To prepare your training data, you need to put all the samples into a list and save it to a json file. We provide our train&val datasets (with our own root) [here](https://huggingface.co/datasets/Lhh123/CoE_ScienceQA). You need to change the image path to your own path instead of directly using it. Alternatively, you can download the raw data from the original dataset [ScienceQA](https://scienceqa.github.io/) and convert them into the following format by running:
+To prepare your training data, you need to put all the samples into a list and save it to a json file. We provide our train&val datasets (with our own root) [here](https://huggingface.co/datasets/Lhh123/CoE_ScienceQA). You need to change the image path to your own path instead of directly using it. Alternatively, we also provide the original dataset [ScienceQA](https://scienceqa.github.io/) with [train](https://huggingface.co/datasets/Lhh123/CoE_ScienceQA/tree/main/train) & [val](https://huggingface.co/datasets/Lhh123/CoE_ScienceQA/tree/main/val) & [test](https://huggingface.co/datasets/Lhh123/CoE_ScienceQA/tree/main/test) split. You can download and convert them into the following format by running:
 ```python
 # Question generation data pre-process
 python prepare_qg.py
