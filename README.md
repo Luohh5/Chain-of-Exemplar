@@ -240,7 +240,10 @@ We profile the GPU memory and training speed of both LoRA (Base) refers to train
 
 ## Evaluation
 
-To evaluate the quality of generated questions and distractors.
+Evaluate the quality of generated questions and distractors by running:
+```python
+python scoring.py
+```
 
 ## Citation
 
