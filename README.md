@@ -4,7 +4,7 @@
 Educational Question Generation</h1>
 <p align="center">
 <br>
-<a href="assets/wechat.jpg">WeChat</a>&nbsp&nbsp | &nbsp&nbsp<a href="https://huggingface.co/datasets/Lhh123/CoE_ScienceQA">Dataset</a>&nbsp&nbsp | &nbsp&nbsp<a href="https://huggingface.co/Lhh123/coe_multitask_blip2xl_angle_2ep">Checkpoints</a>&nbsp ｜ &nbsp<a href="https://aclanthology.org/2024.acl-long.432.pdf">Paper</a>&nbsp&nbsp
+<a href="https://huggingface.co/datasets/Lhh123/CoE_ScienceQA">Dataset</a>&nbsp&nbsp | &nbsp&nbsp<a href="https://huggingface.co/Lhh123/coe_multitask_blip2xl_angle_2ep">Checkpoints</a>&nbsp ｜ &nbsp<a href="https://aclanthology.org/2024.acl-long.432.pdf">Paper</a>&nbsp&nbsp
 </p>
 <br><br>
 
